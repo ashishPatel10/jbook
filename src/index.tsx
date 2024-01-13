@@ -2,6 +2,7 @@ import ReactDOM  from "react-dom";
 import { useState, useEffect, useRef } from "react";
 import { createRoot } from 'react-dom/client';
 import * as esbuild from 'esbuild-wasm'
+import { unpkgPathPlugin } from "./plugins/unpkg-path-plugin";
 
 const root = createRoot(document.getElementById("root") as HTMLElement);
 
@@ -24,11 +25,13 @@ const App = () => {
         if(!ref.current){
             return;
         }
-        const result = await ref.current.transform(input,{
-            loader:'jsx',
-            target:'es2015'
-        })        
-        setCode(result.code)
+        const result = await ref.current.build({
+            entryPoints:['index.js'],
+            bundle:true,
+            write:false,
+            plugins:[unpkgPathPlugin()]
+        })      
+        setCode(result.outputFiles[0].text)
         
     }
     return <div>

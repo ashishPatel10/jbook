@@ -1,6 +1,19 @@
 import * as esbuild from 'esbuild-wasm';
 import axios from 'axios'
+import localForage from 'localforage';
+
+const fileCache = localForage.createInstance({
+  name:'filecache'
+});
  
+(async ()=>{
+  await fileCache.setItem('color','red');
+
+  const color = await fileCache.getItem('color')
+  console.log(color);
+  
+})()
+
 export const unpkgPathPlugin = () => {
   return {
     name: 'unpkg-path-plugin',
@@ -17,7 +30,7 @@ export const unpkgPathPlugin = () => {
         if (args.path.includes('./') || args.path.includes('../')){
           return {
             namespace:'a',
-            path:new URL(args.path,args.importer+'/').href
+            path:new URL(args.path,'https://unpkg.com'+args.resolveDir+'/').href
           }
         }
         return {
@@ -34,15 +47,18 @@ export const unpkgPathPlugin = () => {
           return {
             loader: 'jsx',
             contents: `
-              import message from 'tiny-test-pkg';
-              console.log(message);
+              import React from 'react';
+              console.log(React);
             `,
           };
         } 
-        const {data} = await axios.get(args.path)
+        const {data, request} = await axios.get(args.path)
+        console.log(request);
+        
         return {
             loader: 'jsx',
-            contents:data
+            contents:data,
+            resolveDir: new URL('./', request.responseURL).pathname
           };
         
       });
